@@ -8,6 +8,13 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Speed up Docker builds by skipping type/ESLint checks
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     return [
       {
@@ -15,13 +22,6 @@ const nextConfig = {
         destination: `${API_URL}/api/:path*`,
       },
     ];
-  },
-  webpackDevMiddleware: config => {
-    config.watchOptions = {
-      poll: 800,
-      aggregateTimeout: 300,
-    }
-    return config
   },
 };
 

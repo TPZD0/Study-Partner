@@ -1,13 +1,15 @@
 import "@/styles/globals.css";
+import "@/styles/figma.css";
 import React from "react";
 import { useRouter } from "next/router";
 import { AppCacheProvider } from "@mui/material-nextjs/v13-pagesRouter";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Roboto } from "next/font/google";
-import Layout from "@/components/layout";
+// Figma pages manage their own layout; remove old layout wrapper
 import useBearStore from "@/store/useBearStore";
 import Head from "next/head";
 import { Backdrop, CircularProgress } from "@mui/material";
+import { Toaster } from "sonner";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -47,9 +49,8 @@ export default function App({ Component, pageProps, props }) {
 
       <AppCacheProvider {...props}>
         <ThemeProvider theme={theme}>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
+          <Component {...pageProps} />
+          <Toaster position="top-right" richColors />
         </ThemeProvider>
       </AppCacheProvider>
     </React.Fragment>
