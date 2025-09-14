@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS pdf_files (
     user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    summary TEXT,
+    summary_generated_at TIMESTAMP
 );
 
 -- Create indexes for better performance

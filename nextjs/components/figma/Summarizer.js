@@ -6,113 +6,124 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Input } from '../ui/input';
 import { Upload, FileText, Clock, Trash2, Edit2, Plus, ArrowLeft, BookOpen, Send, MessageCircle } from 'lucide-react';
 // Converted from TSX to JS: removed type definitions
-import { extractTextFromPDF } from '@/utils/pdfUtils';
-import { generateSummaryFromContent } from '@/utils/summaryGenerator';
+// Removed mock utilities - now using real backend API
 
 export function Summarizer({ summaryHistory, addSummary, deleteSummary, renameSummary, setCurrentPage }) {
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadedFileId, setUploadedFileId] = useState(null);
   const [selectedSummary, setSelectedSummary] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [isChatting, setIsChatting] = useState(false);
+  const [userFiles, setUserFiles] = useState([]);
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = async (event) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Check if it's a PDF
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file only.');
+      return;
+    }
+
+    setIsUploading(true);
+    setSelectedSummary(null);
+
+    try {
+      // Get user data from localStorage
+      const userId = localStorage.getItem('userId');
+
+      if (!userId) {
+        alert('Please log in to upload files.');
+        return;
+      }
+
+      // Upload file to backend
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('user_id', userId.toString());
+      formData.append('name', file.name.replace('.pdf', ''));
+
+      const response = await fetch('http://localhost:8000/api/files/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      const result = await response.json();
       setUploadedFile(file);
-      setSelectedSummary(null);
+      setUploadedFileId(result.id);
+      
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Failed to upload file. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const generateSummary = async () => {
-    if (!uploadedFile) {
-      alert('Please select a file to upload first.');
+    if (!uploadedFileId) {
+      alert('Please upload a file first.');
       return;
     }
     
     setIsGenerating(true);
     
     try {
-      // Check if it's a PDF file (by extension or MIME type)
-      const isPdfByType = uploadedFile.type === 'application/pdf';
-      const isPdfByName = uploadedFile.name.toLowerCase().endsWith('.pdf');
-      
-      if (isPdfByType || isPdfByName) {
-        // Use smart PDF content analysis based on filename and metadata
-        const extractedContent = await extractTextFromPDF(uploadedFile);
-        
-        // Generate summary from the analyzed content
-        const generatedSummary = generateSummaryFromContent(extractedContent);
-        
-        // Save to history
-        addSummary({
-          title: 'Summary of ' + uploadedFile.name.replace(/\.pdf$/i, ''),
-          fileName: uploadedFile.name,
-          createdAt: new Date().toISOString(),
-          content: generatedSummary.content,
-          keyPoints: generatedSummary.keyPoints,
-          wordCount: generatedSummary.wordCount
-        });
-      } else {
-        // For non-PDF files, generate a generic summary
-        const mockSummary = {
-          title: 'Summary of ' + uploadedFile.name,
-          content: `This document contains important information relevant to the uploaded file. The content has been processed and the key concepts have been identified for your review.
+      // Call the AI summarization API
+      const formData = new FormData();
+      formData.append('file_id', uploadedFileId.toString());
+      formData.append('max_length', '500');
 
-The document appears to cover various topics and provides detailed information that can be useful for study and reference purposes. The material is organized in a structured manner to facilitate understanding.
+      const response = await fetch('http://localhost:8000/api/ai/summarize', {
+        method: 'POST',
+        body: formData,
+      });
 
-Please note that for the most accurate summary and quiz generation, PDF files are recommended as they allow for complete text extraction and analysis.`,
-          keyPoints: [
-            'Document contains relevant information for study purposes',
-            'Content is structured for easy understanding',
-            'Material covers various important topics',
-            'Suitable for reference and learning',
-            'PDF format recommended for best results'
-          ],
-          wordCount: 85
-        };
-        
-        // Save to history
-        addSummary({
-          title: mockSummary.title,
-          fileName: uploadedFile.name,
-          createdAt: new Date().toISOString(),
-          content: mockSummary.content,
-          keyPoints: mockSummary.keyPoints,
-          wordCount: mockSummary.wordCount
-        });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to generate summary');
       }
+
+      const result = await response.json();
+      
+      // Parse summary into key points (split by newlines or sentences)
+      const keyPoints = result.summary
+        .split(/\n|\. /)
+        .filter(point => point.trim().length > 10)
+        .slice(0, 8) // Limit to 8 key points
+        .map(point => point.trim().replace(/^\d+\.\s*/, ''));
+      
+      // Save to history
+      addSummary({
+        id: `sum-${result.file_id}-${Date.now()}`,
+        title: `Summary of ${result.file_name}`,
+        fileName: result.file_name,
+        createdAt: new Date().toISOString(),
+        content: result.summary,
+        keyPoints: keyPoints.length > 0 ? keyPoints : ['Summary generated successfully'],
+        wordCount: result.summary_word_count || result.summary.split(' ').length,
+        fileId: result.file_id
+      });
       
       // Reset upload state on success
       setUploadedFile(null);
-      setIsGenerating(false);
+      setUploadedFileId(null);
       
     } catch (error) {
       console.error('Error generating summary:', error);
+      alert(`Failed to generate summary: ${error.message}`);
+    } finally {
       setIsGenerating(false);
-      
-      // Don't reset the uploaded file so user can try again or upload a different file
-      
-      // Show specific error message
-      let errorMessage = 'Error processing the file. Please try again.';
-      if (error instanceof Error) {
-        // Provide more helpful error messages
-        if (error.message.includes('too large')) {
-          errorMessage = error.message + ' Try compressing your PDF or using a smaller file.';
-        } else if (error.message.includes('valid PDF')) {
-          errorMessage = error.message + ' Make sure your file is a properly formatted PDF document.';
-        } else if (error.message.includes('empty')) {
-          errorMessage = error.message + ' Please check that your file is not corrupted.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      // Show user-friendly error message
-      alert(errorMessage);
     }
   };
 
@@ -220,6 +231,7 @@ Please note that for the most accurate summary and quiz generation, PDF files ar
   const startNewUpload = () => {
     setSelectedSummary(null);
     setUploadedFile(null);
+    setUploadedFileId(null);
     setChatMessages([]);
     setChatInput('');
   };
@@ -295,14 +307,15 @@ Please note that for the most accurate summary and quiz generation, PDF files ar
                       <div className="max-w-sm mx-auto">
                         <input
                           type="file"
-                          accept=".txt,.pdf"
+                          accept=".pdf"
                           onChange={handleFileUpload}
                           className="hidden"
                           id="file-upload"
+                          disabled={isUploading}
                         />
                         <label htmlFor="file-upload" className="block">
-                          <div className="bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer transition-colors rounded-lg py-3 px-6 text-center font-medium">
-                            Upload New Document
+                          <div className={`${isUploading ? 'bg-muted cursor-not-allowed' : 'bg-primary hover:bg-primary/90 cursor-pointer'} text-primary-foreground transition-colors rounded-lg py-3 px-6 text-center font-medium`}>
+                            {isUploading ? 'Uploading...' : 'Upload PDF Document'}
                           </div>
                         </label>
                       </div>
@@ -323,10 +336,15 @@ Please note that for the most accurate summary and quiz generation, PDF files ar
                         <div className="mt-6 flex justify-center">
                           <Button 
                             onClick={generateSummary} 
-                            disabled={isGenerating}
+                            disabled={isGenerating || isUploading}
                             className="px-8 py-3"
                           >
-                            {isGenerating ? 'Generating Summary...' : 'Generate Summary'}
+                            {isGenerating ? (
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Generating AI Summary...</span>
+                              </div>
+                            ) : 'Generate AI Summary'}
                           </Button>
                         </div>
                       </div>
