@@ -1,126 +1,192 @@
-# Next.js + FastAPI + PostgreSQL Starter Project
+# Study Partner - AI-Powered Learning Companion
 
-This project is a Next.js application containerized with Docker. It uses Docker Compose to simplify development and dependency management, including building and running the application. The project also integrates **Material UI** for creating a responsive and sleek user interface.
+Study Partner is a comprehensive learning management application that helps students organize their studies, summarize documents, create flashcards, take quizzes, and track their learning goals. Built with AI-powered PDF summarization using OpenAI's GPT-3.5-turbo, this application provides intelligent study assistance to enhance your learning experience.
 
-This project is developed for GUI chapter of the Advance Computer Programming class under the Department of Robotics and AI Engineering, School of Engineering, KMITL.
+## ✨ Features
 
-## Getting Started
+- **🤖 AI-Powered PDF Summarization**: Upload PDFs and get intelligent summaries using OpenAI GPT-3.5-turbo
+- **👤 User Authentication**: Secure user registration and login system with encrypted passwords
+- **📚 Document Management**: Upload, organize, and manage your study materials
+- **🎯 Flashcards**: Create and review flashcards for effective memorization
+- **📝 Quizzes**: Take interactive quizzes to test your knowledge
+- **🎯 Goal Tracking**: Set and monitor your learning objectives
+- **📊 Dashboard**: Centralized view of your study progress and materials
+- **🎨 Modern UI**: Beautiful, responsive interface built with Material-UI
+
+This project is developed for the Advanced Computer Programming class under the Department of Robotics and AI Engineering, School of Engineering, KMITL.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- OpenAI API key (for AI summarization features)
 
 ### Installation
 
-1. Clone the repository:
-
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/syanyong/acpapp.git
-   cd acpapp
+   git clone <your-repository-url>
+   cd Study-Partner
    ```
 
-2. Build and start the application using Docker Compose:
+2. **Set up environment variables:**
+   ```bash
+   cd fastapi
+   cp .env.example .env
+   ```
+   
+   Edit the `.env` file and add your OpenAI API key:
+   ```env
+   OPENAI_API_KEY=sk-your-actual-api-key-here
+   ```
 
+3. **Start the application:**
    ```bash
    docker-compose up --build
    ```
 
-3. Open your browser and navigate to:
+4. **Access the application:**
+   - **Frontend**: http://localhost:3000
+   - **Backend API**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
 
+### Default Test Account
+
+For testing purposes, you can use:
+- **Username**: `testuser`
+- **Email**: `test@example.com`
+- **Password**: `testpassword123`
+
+Or create a new account through the registration form.
+
+## 📁 Project Structure
+
+```plaintext
+Study-Partner/
+├── docker-compose.yaml         # Docker services configuration
+├── database_schema.sql         # PostgreSQL database schema
+├── AI_SETUP.md                # AI feature setup guide
+├── README.md                   # This file
+├── nextjs/                     # Frontend application
+│   ├── components/
+│   │   ├── ui/                # UI components
+│   │   ├── figma/             # Design components
+│   │   └── NavigationBar.js   # Main navigation
+│   ├── pages/
+│   │   ├── dashboard.js       # Main dashboard
+│   │   ├── summarizer.js      # PDF summarization page
+│   │   ├── flashcards.js      # Flashcard management
+│   │   ├── quiz/              # Quiz functionality
+│   │   ├── goals.js           # Goal tracking
+│   │   ├── settings.js        # User settings
+│   │   └── login.js           # Authentication
+│   ├── lib/
+│   │   └── sampleData.js      # Sample data for development
+│   ├── public/                # Static assets
+│   ├── package.json           # Frontend dependencies
+│   └── Dockerfile             # Frontend container config
+└── fastapi/                   # Backend API
+    ├── app.py                 # FastAPI application entry point
+    ├── database.py            # Database connection and queries
+    ├── routes/
+    │   ├── users.py           # User authentication endpoints
+    │   ├── files.py           # File upload/management endpoints
+    │   └── ai.py              # AI summarization endpoints
+    ├── uploads/               # Uploaded PDF storage
+    ├── .env                   # Environment variables (create this)
+    ├── requirements.txt       # Python dependencies
+    └── Dockerfile             # Backend container config
+```
+
+## 🔧 Technology Stack
+
+### Frontend
+- **Next.js** - React framework with server-side rendering
+- **Material-UI (MUI)** - Modern React component library
+- **Zustand** - Lightweight state management
+- **JavaScript/JSX** - Programming language and syntax
+
+### Backend
+- **FastAPI** - Modern Python web framework
+- **PostgreSQL** - Relational database
+- **OpenAI API** - AI-powered text summarization
+- **PyPDF2** - PDF text extraction
+- **Passlib[bcrypt]** - Secure password hashing
+- **Asyncpg** - Asynchronous PostgreSQL driver
+
+### Infrastructure
+- **Docker & Docker Compose** - Containerization and orchestration
+- **CORS Middleware** - Cross-origin resource sharing
+- **Static File Serving** - File upload and storage
+
+## 🔌 API Endpoints
+
+### Authentication
+- `POST /api/users/create` - User registration
+- `POST /api/users/login` - User login
+
+### File Management
+- `POST /api/files/upload` - Upload PDF files
+- `GET /api/files/{user_id}` - Get user's files
+
+### AI Features
+- `POST /api/ai/summarize` - Generate AI summary for PDF
+- `GET /api/ai/summary/{file_id}` - Retrieve existing summary
+- `GET /api/ai/files-with-summaries/{user_id}` - List files with summary status
+
+## 🎯 How to Use
+
+1. **Register/Login**: Create an account or use the test credentials
+2. **Upload PDFs**: Go to the Summarizer page and upload your study materials
+3. **Generate Summaries**: Click "Generate AI Summary" to get intelligent summaries
+4. **Create Flashcards**: Use the flashcard feature for active recall
+5. **Take Quizzes**: Test your knowledge with interactive quizzes
+6. **Track Goals**: Set and monitor your learning objectives
+7. **Dashboard**: Monitor your progress from the main dashboard
+
+## 🔐 Security Features
+
+- **Password Encryption**: Uses bcrypt for secure password hashing
+- **Environment Variables**: Sensitive data stored securely
+- **CORS Configuration**: Proper cross-origin request handling
+- **Input Validation**: Pydantic models for data validation
+
+## 🚨 Important Setup Notes
+
+### OpenAI API Key Setup
+1. Get your API key from [OpenAI Platform](https://platform.openai.com/)
+2. Create `fastapi/.env` file with:
+   ```env
+   OPENAI_API_KEY=sk-your-actual-api-key-here
    ```
-   http://localhost:3000
-   ```
-4. The FastAPI backend will be available at:
+3. See `AI_SETUP.md` for detailed configuration instructions
 
-   ```
-   http://localhost:8000
-   ```
-
-### Running the Application
-
-- The **Next.js** application will be available at `http://localhost:3000`.
-- The **FastAPI** backend will be accessible at `http://localhost:8000`.
-- Both services use **hot-reloading** for development, meaning that any changes in your source code will automatically reflect in the application.
-
-### Building the Production Image
-
-To build a production-ready Docker image, run:
-
+### Database Migration
+If updating an existing database, run the migration script to add summary columns:
 ```bash
-docker-compose build
+docker exec -i study-partner-db-1 psql -U temp -d advcompro < migrate_add_summary.sql
 ```
 
-## Project Structure
+## 🐛 Troubleshooting
 
-```plaintext
-.
-├── docker-compose.yaml    # Docker Compose configuration
-├── nextjs/
-│   ├── components/        # React components for the project
-│   ├── pages/             # Next.js pages
-│   ├── public/            # Static assets
-│   ├── Dockerfile         # Dockerfile for building the Next.js app
-│   ├── jsconfig.json      # JS configuration for path aliases
-│   ├── next.config.mjs    # Next.js configuration file
-│   ├── package.json       # Project dependencies and scripts
-│   └── .gitignore         # Ignored files for Git
-└── fastapi/
-    ├── app.py             # FastAPI app entry point
-    ├── Dockerfile         # Dockerfile for FastAPI backend
-    ├── requirements.txt   # Python dependencies for FastAPI
-    ├── database.py        # Database connection and queries
-    ├── routes/            # FastAPI routes
-    └── .gitignore         # Ignored files for FastAPI
-```
+- **OpenAI API Issues**: Ensure API key is set and has sufficient credits
+- **File Upload Problems**: Check file permissions and storage directory
+- **Database Errors**: Verify PostgreSQL is running and accessible
+- **Authentication Issues**: Clear localStorage and try logging in again
 
-### The `pages` Folder (**Main folder to implement)
+## 📝 Development
 
-In a Next.js project, the `pages` folder is central to defining the routes for your application. Each file inside the `pages` directory corresponds to a route based on its file name:
+### Adding New Features
+1. **Frontend**: Add new pages in `nextjs/pages/`
+2. **Backend**: Create new routes in `fastapi/routes/`
+3. **Database**: Update schema in `database_schema.sql`
+4. **Don't forget**: Include new routes in `fastapi/app.py`
 
-- **`index.js`**: The main landing page of your application, accessible at the root URL (`/`). This is where you'll typically start developing the homepage or entry point of your application.
-  
-- **Dynamic Routing**: You can also create dynamic routes using square brackets. For example, `pages/[id].js` would map to routes like `/123`, `/about`, etc., allowing you to fetch dynamic content based on the route parameter.
+### API Proxy Configuration
+All `/api` routes are automatically proxied to the backend server. Configuration can be modified in `next.config.mjs`.
 
-Example structure:
-```plaintext
-pages/
-├── index.js           # Home page
-├── about.js           # Example page for /about route
-├── [id].js            # Dynamic route for URLs with /id
-```
+## 📄 License
 
-In this project, all the front-end routes and logic for the UI are defined within this folder. The structure helps you easily create and manage routes, and you can also introduce dynamic pages as needed.
-
-To see a simple example of a Next.js page, you can refer to pages/page1.js. It contains the structure for defining a component-based page that is accessible through /page1. You can use this as a reference to add more pages to your project.
-
-## API Proxy Configuration
-The project is configured with an API proxy to handle backend requests seamlessly. All routes that begin with /api will be redirected to the backend server running on http://backend:8000. This ensures that API calls are proxied to the backend service without the need to modify frontend code.
-
-This proxy configuration can be modified or updated inside the next.config.mjs file:
-
-## FastAPI and PostgreSQL
-
-The FastAPI backend is connected to a PostgreSQL database. The `database.py` file contains the database connection logic and functions to interact with the database asynchronously using `databases` and `asyncpg`.
-
-### Pydantic Models:
-
-UserCreate, UserUpdate, and User: These models define the schema for the user data, used for input validation and serialization of request and response data.
-
-### API Endpoints:
-The routes folder in the FastAPI backend contains the API route definitions, which are essentially the endpoints that clients (such as the frontend or external systems) can use to interact with the backend. You can create your new endpoint but don't forget to mention in [app.py](/fastapi/app.py)
-
-Example FastAPI route to interact with the PostgreSQL database can be found in [users.py](/fastapi/routes/users.py)
-
-### Database Interaction Function:
-The database interaction function e.g. the query string can be found in [database.py](/fastapi/database.py)
-
-## Key Technology
-
-- **Next.js Frontend**: Utilizes Next.js for server-side rendering and static generation.
-- **FastAPI Backend**: Provides a fast and easy-to-use API layer with support for asynchronous operations.
-- **PostgreSQL Database**: Fully integrated with PostgreSQL for persistent data storage.
-- **Dockerized**: Easy to build and deploy using Docker, ensuring consistency across environments.
-- **MUI (Material UI)**: For building a responsive and elegant UI.
-- **State Management**: Uses `zustand` for state management in the frontend.
-- **API Proxy**: Configured with `rewrites` to route API calls to the backend.
-
-## Implementing with Material UI
-
-This project uses [Material UI (MUI)](https://mui.com/material-ui/getting-started/overview/) to enhance the user interface design and development. MUI is a popular React component library that provides pre-built, customizable UI components based on Google's Material Design guidelines.
+This project is developed for educational purposes as part of the Advanced Computer Programming course at KMITL.
 
