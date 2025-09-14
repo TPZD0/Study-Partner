@@ -2,19 +2,21 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from auth import hash_password, verify_password
 from database import (
     connect_db, disconnect_db,
     insert_user, get_user, get_user_by_id,
     get_user_by_email, update_user as update_user_db,
     delete_user as delete_user_db,
     get_user_by_identifier_and_password,   # <-- import the new helper
+    get_user_by_identifier,
 )
 
 router = APIRouter()
 
 class UserCreate(BaseModel):
     username: str
-    password_hash: str
+    password: str  # plain text password for registration
     email: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -41,7 +43,7 @@ class User(BaseModel):
 # NEW: login payload supports username OR email via `identifier`
 class UserLogin(BaseModel):
     identifier: str     # username OR email
-    password_hash: str
+    password: str       # plain text password
 
 async def ensure_db():
     await connect_db()
@@ -56,11 +58,21 @@ async def _shutdown():
 
 @router.post("/users/create", response_model=User, dependencies=[Depends(ensure_db)])
 async def create_user(user: UserCreate):
+    # Check if username already exists
     existing_user = await get_user(user.username)
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
+    
+    # Check if email already exists
+    existing_email = await get_user_by_identifier(user.email)
+    if existing_email:
+        raise HTTPException(status_code=400, detail="Email already exists")
+    
+    # Hash the password
+    password_hash = hash_password(user.password)
+    
     result = await insert_user(
-        user.username, user.password_hash, user.email,
+        user.username, password_hash, user.email,
         user.first_name, user.last_name, user.tel
     )
     if result is None:
@@ -98,9 +110,15 @@ async def delete_user_endpoint(user_id: int):
 # UPDATED: login supports username OR email via `identifier`
 @router.post("/users/login", dependencies=[Depends(ensure_db)])
 async def login_user(payload: UserLogin):
-    db_user = await get_user_by_identifier_and_password(payload.identifier, payload.password_hash)
+    # Get user by identifier (username or email)
+    db_user = await get_user_by_identifier(payload.identifier)
     if db_user is None:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Verify password
+    if not verify_password(payload.password, db_user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
     return {
         "user_id": db_user["user_id"],
         "username": db_user["username"],

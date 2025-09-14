@@ -66,6 +66,14 @@ async def get_user_by_identifier_and_password(identifier: str, password_hash: st
     """
     return await database.fetch_one(query=query, values={"identifier": identifier, "password_hash": password_hash})
 
+# Get user by identifier (username or email) for authentication
+async def get_user_by_identifier(identifier: str):
+    query = """
+    SELECT * FROM users
+    WHERE username = :identifier OR email = :identifier
+    """
+    return await database.fetch_one(query=query, values={"identifier": identifier})
+
 async def insert_pdf(user_id: int, name: str, file_path: str):
     query = """
     INSERT INTO pdf_files (user_id, name, file_path)
