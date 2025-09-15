@@ -34,420 +34,82 @@ export function Flashcards({ flashcardHistory, addFlashcardSet, deleteFlashcardS
     setIsGenerating(true);
     
     try {
-      // Check if it's a PDF file
-      if (uploadedFile.type === 'application/pdf') {
-        // Use smart PDF content analysis based on filename and metadata
-        const extractedContent = await extractTextFromPDF(uploadedFile);
-        
-        // Generate quiz questions from the analyzed content
-        const generatedQuestions = generateQuizFromContent(extractedContent, uploadedFile.name);
-        
-        setQuizQuestions(generatedQuestions);
-        setCurrentQuestionIndex(0);
-        setSelectedAnswers({});
-        setShowAnswer(false);
-        setQuizCompleted(false);
-        setScore(0);
-        
-        // Save to history
-        const newFlashcardSet = {
-          title: uploadedFile.name.replace('.pdf', '') + ' Quiz',
-          fileName: uploadedFile.name,
-          createdAt: new Date().toISOString(),
-          flashcards: generatedQuestions.map(q => ({
-            id: q.id,
-            question: q.question,
-            answer: `${q.correctAnswer}. ${q.options[q.correctAnswer]}`
-          })),
-          quizQuestions: generatedQuestions,
-          attempts: [],
-          lastResult: undefined
-        };
-        addFlashcardSet(newFlashcardSet);
-      } else
-      
-      // For non-PDF files
-      {
-        // For non-PDF files, generate questions based on file name
-        const fileName = uploadedFile.name.toLowerCase();
-        let mockQuizQuestions = [];
+      // First, upload the file to the backend
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
+      formData.append('name', uploadedFile.name);
+      const userId = localStorage.getItem('userId') || '1';
+      formData.append('user_id', userId);
 
-        if (fileName.includes('biology') || fileName.includes('science') || fileName.includes('plant')) {
-          // Biology/Science related questions
-          mockQuizQuestions = [
-            {
-              id: '1',
-              question: 'What is the process by which plants make their own food?',
-              options: {
-                A: 'Respiration',
-                B: 'Photosynthesis',
-                C: 'Digestion',
-                D: 'Fermentation'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '2',
-              question: 'Which organelle is primarily responsible for photosynthesis?',
-              options: {
-                A: 'Mitochondria',
-                B: 'Nucleus',
-                C: 'Chloroplast',
-                D: 'Ribosome'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '3',
-              question: 'What gas do plants absorb from the atmosphere during photosynthesis?',
-              options: {
-                A: 'Oxygen',
-                B: 'Nitrogen',
-                C: 'Carbon dioxide',
-                D: 'Hydrogen'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '4',
-              question: 'What is the main product of photosynthesis that plants use for energy?',
-              options: {
-                A: 'Oxygen',
-                B: 'Glucose',
-                C: 'Water',
-                D: 'Carbon dioxide'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '5',
-              question: 'Which part of the plant cell contains chlorophyll?',
-              options: {
-                A: 'Cell wall',
-                B: 'Nucleus',
-                C: 'Chloroplast',
-                D: 'Vacuole'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '6',
-              question: 'What happens to the oxygen produced during photosynthesis?',
-              options: {
-                A: 'It is stored in the roots',
-                B: 'It is released into the atmosphere',
-                C: 'It is converted to carbon dioxide',
-                D: 'It is used by the plant for respiration'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '7',
-              question: 'In which part of the chloroplast do the light reactions occur?',
-              options: {
-                A: 'Stroma',
-                B: 'Thylakoid',
-                C: 'Outer membrane',
-                D: 'Inner membrane'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '8',
-              question: 'What is the role of sunlight in photosynthesis?',
-              options: {
-                A: 'It provides heat for the reaction',
-                B: 'It provides energy to drive the reaction',
-                C: 'It breaks down glucose',
-                D: 'It produces oxygen directly'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '9',
-              question: 'Which stage of photosynthesis does NOT require direct sunlight?',
-              options: {
-                A: 'Light reactions',
-                B: 'Calvin cycle',
-                C: 'Photolysis',
-                D: 'ATP synthesis'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '10',
-              question: 'What would happen if a plant was kept in complete darkness for several days?',
-              options: {
-                A: 'It would grow faster',
-                B: 'It would produce more oxygen',
-                C: 'It would stop photosynthesis and eventually die',
-                D: 'It would change color to red'
-              },
-              correctAnswer: 'C'
-            }
-          ];
-        } else if (fileName.includes('math') || fileName.includes('algebra') || fileName.includes('calculus')) {
-          // Mathematics related questions
-          mockQuizQuestions = [
-            {
-              id: '1',
-              question: 'What is the derivative of x²?',
-              options: {
-                A: 'x',
-                B: '2x',
-                C: 'x³',
-                D: '2'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '2',
-              question: 'What is the slope of a line passing through points (2,3) and (4,7)?',
-              options: {
-                A: '1',
-                B: '2',
-                C: '3',
-                D: '4'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '3',
-              question: 'What is the value of π (pi) approximately?',
-              options: {
-                A: '3.14',
-                B: '2.71',
-                C: '1.41',
-                D: '1.73'
-              },
-              correctAnswer: 'A'
-            },
-            {
-              id: '4',
-              question: 'In the equation y = mx + b, what does m represent?',
-              options: {
-                A: 'Y-intercept',
-                B: 'X-intercept',
-                C: 'Slope',
-                D: 'Constant'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '5',
-              question: 'What is the integral of 2x?',
-              options: {
-                A: 'x² + C',
-                B: '2 + C',
-                C: '2x² + C',
-                D: 'x + C'
-              },
-              correctAnswer: 'A'
-            },
-            {
-              id: '6',
-              question: 'What is the Pythagorean theorem?',
-              options: {
-                A: 'a + b = c',
-                B: 'a² + b² = c²',
-                C: 'a × b = c',
-                D: 'a/b = c'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '7',
-              question: 'What is the quadratic formula?',
-              options: {
-                A: 'x = -b ± √(b² - 4ac) / 2a',
-                B: 'x = -b ± √(b² + 4ac) / 2a',
-                C: 'x = b ± √(b² - 4ac) / 2a',
-                D: 'x = -b ± √(b² - 4ac) / a'
-              },
-              correctAnswer: 'A'
-            },
-            {
-              id: '8',
-              question: 'What is the area of a circle with radius r?',
-              options: {
-                A: '2πr',
-                B: 'πr²',
-                C: 'πr',
-                D: '2πr²'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '9',
-              question: 'What is log₁₀(100)?',
-              options: {
-                A: '1',
-                B: '2',
-                C: '10',
-                D: '100'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '10',
-              question: 'What is the limit of (sin x)/x as x approaches 0?',
-              options: {
-                A: '0',
-                B: '1',
-                C: '∞',
-                D: 'undefined'
-              },
-              correctAnswer: 'B'
-            }
-          ];
-        } else {
-          // General questions
-          mockQuizQuestions = [
-            {
-              id: '1',
-              question: 'What is the capital of France?',
-              options: {
-                A: 'London',
-                B: 'Berlin',
-                C: 'Paris',
-                D: 'Madrid'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '2',
-              question: 'Which planet is known as the Red Planet?',
-              options: {
-                A: 'Venus',
-                B: 'Mars',
-                C: 'Jupiter',
-                D: 'Saturn'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '3',
-              question: 'Who wrote "Romeo and Juliet"?',
-              options: {
-                A: 'Charles Dickens',
-                B: 'Mark Twain',
-                C: 'William Shakespeare',
-                D: 'Jane Austen'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '4',
-              question: 'What is the largest mammal in the world?',
-              options: {
-                A: 'African Elephant',
-                B: 'Blue Whale',
-                C: 'Giraffe',
-                D: 'Hippopotamus'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '5',
-              question: 'In which year did World War II end?',
-              options: {
-                A: '1944',
-                B: '1945',
-                C: '1946',
-                D: '1947'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '6',
-              question: 'What is the chemical symbol for gold?',
-              options: {
-                A: 'Go',
-                B: 'Gd',
-                C: 'Au',
-                D: 'Ag'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '7',
-              question: 'Which continent is the largest by land area?',
-              options: {
-                A: 'Africa',
-                B: 'North America',
-                C: 'Asia',
-                D: 'Europe'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '8',
-              question: 'How many sides does a hexagon have?',
-              options: {
-                A: '5',
-                B: '6',
-                C: '7',
-                D: '8'
-              },
-              correctAnswer: 'B'
-            },
-            {
-              id: '9',
-              question: 'What is the smallest unit of matter?',
-              options: {
-                A: 'Molecule',
-                B: 'Cell',
-                C: 'Atom',
-                D: 'Electron'
-              },
-              correctAnswer: 'C'
-            },
-            {
-              id: '10',
-              question: 'Which ocean is the largest?',
-              options: {
-                A: 'Atlantic Ocean',
-                B: 'Indian Ocean',
-                C: 'Arctic Ocean',
-                D: 'Pacific Ocean'
-              },
-              correctAnswer: 'D'
-            }
-          ];
-        }
-        
-        setQuizQuestions(mockQuizQuestions);
-        setCurrentQuestionIndex(0);
-        setSelectedAnswers({});
-        setShowAnswer(false);
-        setQuizCompleted(false);
-        setScore(0);
-        
-        // Save to history (converting to flashcard format for storage)
-        const flashcardFormat = mockQuizQuestions.map(q => ({
+      // Upload file to backend
+      const uploadResponse = await fetch('http://localhost:8000/api/files/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const fileId = uploadResult.id;
+
+      // Generate quiz using the uploaded file
+      const quizFormData = new FormData();
+      quizFormData.append('file_id', fileId.toString());
+      quizFormData.append('num_questions', '10');
+      quizFormData.append('difficulty', 'medium');
+
+      const quizResponse = await fetch('http://localhost:8000/api/ai/generate-quiz', {
+        method: 'POST',
+        body: quizFormData
+      });
+
+      if (!quizResponse.ok) {
+        throw new Error('Failed to generate quiz');
+      }
+
+      const quizResult = await quizResponse.json();
+      
+      // Transform the API response to match the expected format
+      const generatedQuestions = quizResult.quiz.questions.map((q, index) => ({
+        id: `q-${index}`,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correct_answer,
+        explanation: q.explanation
+      }));
+
+      setQuizQuestions(generatedQuestions);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswers({});
+      setShowAnswer(false);
+      setQuizCompleted(false);
+      setScore(0);
+      
+      // Save to history
+      const newFlashcardSet = {
+        title: uploadedFile.name.replace('.pdf', '') + ' Quiz',
+        fileName: uploadedFile.name,
+        createdAt: new Date().toISOString(),
+        flashcards: generatedQuestions.map(q => ({
           id: q.id,
           question: q.question,
-          answer: `Correct answer: ${q.correctAnswer}. ${q.options[q.correctAnswer]}`
-        }));
-        
-        addFlashcardSet({
-          title: `Quiz from ${uploadedFile.name}`,
-          fileName: uploadedFile.name,
-          createdAt: new Date().toISOString(),
-          flashcards: flashcardFormat,
-          quizQuestions: mockQuizQuestions,
-          attempts: [],
-          lastResult: undefined
-        });
-      }
+          answer: `${q.correctAnswer}. ${q.options[q.correctAnswer]}`
+        })),
+        quizQuestions: generatedQuestions,
+        attempts: [],
+        lastResult: undefined
+      };
+      addFlashcardSet(newFlashcardSet);
       
       setIsGenerating(false);
     } catch (error) {
       console.error('Error generating quiz:', error);
       setIsGenerating(false);
       
-      // Show error message or fallback to mock questions
-      alert('Error processing the file. Please try again or upload a different file.');
+      // Show error message
+      alert(`Error generating quiz: ${error.message}. Please make sure the backend is running and try again.`);
     }
   };
 

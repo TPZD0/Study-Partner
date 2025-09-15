@@ -135,6 +135,124 @@ async def answer_question_about_pdf(file_path: str, question: str) -> str:
         logger.error(f"Error answering question about PDF: {str(e)}")
         raise Exception(f"Failed to answer question: {str(e)}")
 
+async def generate_quiz(text: str, num_questions: int = 5, difficulty: str = "medium") -> dict:
+    """
+    Generate a quiz based on the given text using OpenAI's GPT model.
+    
+    Args:
+        text (str): The text to generate quiz questions from
+        num_questions (int): Number of questions to generate
+        difficulty (str): Difficulty level (easy, medium, hard)
+        
+    Returns:
+        dict: Contains quiz questions with multiple choice answers
+    """
+    try:
+        # Truncate text if it's too long (OpenAI has token limits)
+        max_chars = 10000  # Leave room for quiz generation
+        if len(text) > max_chars:
+            text = text[:max_chars] + "..."
+            logger.info(f"Text truncated to {max_chars} characters due to length")
+        
+        prompt = f"""
+        Based on the following document content, create a quiz with {num_questions} multiple-choice questions at {difficulty} difficulty level.
+        
+        Requirements:
+        - Each question should have 4 options (A, B, C, D)
+        - Only one option should be correct
+        - Questions should test understanding of key concepts, facts, and details from the document
+        - Provide clear explanations for the correct answers
+        - Format the response as valid JSON
+        
+        Document content:
+        {text}
+        
+        Please format your response as a JSON object with this structure:
+        {{
+            "quiz_title": "Quiz based on document content",
+            "questions": [
+                {{
+                    "question": "Question text here?",
+                    "options": {{
+                        "A": "Option A text",
+                        "B": "Option B text", 
+                        "C": "Option C text",
+                        "D": "Option D text"
+                    }},
+                    "correct_answer": "A",
+                    "explanation": "Explanation of why this answer is correct"
+                }}
+            ]
+        }}
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an expert educator that creates high-quality quiz questions based on document content. Always respond with valid JSON format."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=1500,
+            temperature=0.3
+        )
+        
+        quiz_content = response.choices[0].message.content.strip()
+        
+        # Try to parse the JSON response
+        import json
+        try:
+            quiz_data = json.loads(quiz_content)
+            return quiz_data
+        except json.JSONDecodeError:
+            # If JSON parsing fails, try to extract and fix the JSON
+            import re
+            json_match = re.search(r'\{.*\}', quiz_content, re.DOTALL)
+            if json_match:
+                quiz_data = json.loads(json_match.group())
+                return quiz_data
+            else:
+                raise Exception("Failed to parse quiz response as JSON")
+    
+    except Exception as e:
+        logger.error(f"Error generating quiz: {str(e)}")
+        raise Exception(f"Failed to generate quiz: {str(e)}")
+
+async def generate_quiz_from_pdf(file_path: str, num_questions: int = 5, difficulty: str = "medium") -> dict:
+    """
+    Extract text from a PDF and generate a quiz based on its content.
+    
+    Args:
+        file_path (str): Path to the PDF file
+        num_questions (int): Number of questions to generate
+        difficulty (str): Difficulty level (easy, medium, hard)
+        
+    Returns:
+        dict: Contains quiz data and metadata
+    """
+    try:
+        # Extract text from PDF
+        extracted_text = extract_text_from_pdf(file_path)
+        
+        if not extracted_text.strip():
+            raise Exception("No text could be extracted from the PDF")
+        
+        # Generate quiz
+        quiz_data = await generate_quiz(extracted_text, num_questions, difficulty)
+        
+        # Add metadata
+        result = {
+            "quiz": quiz_data,
+            "source_word_count": len(extracted_text.split()),
+            "num_questions": len(quiz_data.get("questions", [])),
+            "difficulty": difficulty
+        }
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"Error in generate_quiz_from_pdf: {str(e)}")
+        raise Exception(f"Failed to generate quiz from PDF: {str(e)}")
+
 async def summarize_pdf(file_path: str, max_length: int = 500) -> dict:
     """
     Extract text from a PDF and generate a summary.
