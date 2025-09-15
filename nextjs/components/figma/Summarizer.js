@@ -133,61 +133,39 @@ export function Summarizer({ summaryHistory, addSummary, deleteSummary, renameSu
     setChatInput('');
   };
 
-  const generateChatResponse = (question, summary) => {
-    const lowerQuestion = question.toLowerCase();
-    
-    // Simple keyword-based responses
-    if (lowerQuestion.includes('what') && (lowerQuestion.includes('about') || lowerQuestion.includes('summary'))) {
-      return `This summary is about ${summary.title.replace('Summary of ', '')}. The main content covers: ${summary.keyPoints.slice(0, 2).join(' and ')}.`;
-    }
-    
-    if (lowerQuestion.includes('key point') || lowerQuestion.includes('main point')) {
-      return `The key points from this summary are:\n${summary.keyPoints.map((point, index) => `${index + 1}. ${point}`).join('\n')}`;
-    }
-    
-    if (lowerQuestion.includes('explain') && lowerQuestion.includes('more')) {
-      const randomPoint = summary.keyPoints[Math.floor(Math.random() * summary.keyPoints.length)];
-      return `Let me elaborate on one of the key points: "${randomPoint}". This relates to the main themes discussed in the document and provides important context for understanding the overall content.`;
-    }
-    
-    if (lowerQuestion.includes('how long') || lowerQuestion.includes('word count')) {
-      return `This summary contains ${summary.wordCount} words and covers ${summary.keyPoints.length} key points. The original document was processed to extract the most important information.`;
-    }
-    
-    if (lowerQuestion.includes('important') || lowerQuestion.includes('significant')) {
-      const firstPoint = summary.keyPoints[0];
-      return `One of the most important aspects highlighted in this summary is: "${firstPoint}". This forms a central part of the document's main message.`;
-    }
-    
-    if (lowerQuestion.includes('help') || lowerQuestion.includes('study')) {
-      return `To study this material effectively, focus on the ${summary.keyPoints.length} key points I've identified. You can also ask me specific questions about any part of the summary, like "What does [specific term] mean?" or "Explain more about [topic]".`;
-    }
-    
-    // Check if question mentions any key point keywords
-    for (const point of summary.keyPoints) {
-      const pointWords = point.toLowerCase().split(' ');
-      if (pointWords.some(word => word.length > 3 && lowerQuestion.includes(word))) {
-        return `Regarding "${point}" - this is one of the key concepts in the summary. It relates to the main themes discussed in the document and is important for understanding the overall content.`;
+  const generateChatResponse = async (question, summary) => {
+    try {
+      // Call the AI chat API
+      const formData = new FormData();
+      formData.append('file_id', summary.fileId.toString());
+      formData.append('question', question);
+
+      const response = await fetch('http://localhost:8000/api/ai/chat', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to get AI response');
       }
+
+      const result = await response.json();
+      return result.answer;
+      
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      return `I'm sorry, I encountered an error while trying to answer your question. Please try again. Error: ${error.message}`;
     }
-    
-    // Default responses
-    const defaultResponses = [
-      `Based on the summary, I can help explain concepts related to ${summary.title.replace('Summary of ', '')}. What specific aspect would you like me to clarify?`,
-      `This summary covers several important points. You can ask me to explain any of the key points in more detail, or ask specific questions about the content.`,
-      `I'm here to help you understand the material better. Try asking me about specific topics mentioned in the summary, or ask me to explain any key points in more detail.`,
-      `Feel free to ask me about any specific part of the summary. I can help explain concepts, provide more detail on key points, or clarify anything that might be unclear.`
-    ];
-    
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
   };
 
-  const sendChatMessage = () => {
+  const sendChatMessage = async () => {
     if (!chatInput.trim() || !selectedSummary) return;
     
+    const currentQuestion = chatInput;
     const userMessage = {
       id: Date.now().toString(),
-      text: chatInput,
+      text: currentQuestion,
       isUser: true,
       timestamp: new Date().toISOString()
     };
@@ -196,18 +174,30 @@ export function Summarizer({ summaryHistory, addSummary, deleteSummary, renameSu
     setChatInput('');
     setIsChatting(true);
     
-    // Simulate AI response delay
-    setTimeout(() => {
+    try {
+      // Get AI response
+      const aiResponseText = await generateChatResponse(currentQuestion, selectedSummary);
+      
       const aiResponse = {
         id: (Date.now() + 1).toString(),
-        text: generateChatResponse(chatInput, selectedSummary),
+        text: aiResponseText,
         isUser: false,
         timestamp: new Date().toISOString()
       };
       
       setChatMessages(prev => [...prev, aiResponse]);
+    } catch (error) {
+      console.error('Error in sendChatMessage:', error);
+      const errorResponse = {
+        id: (Date.now() + 1).toString(),
+        text: "I'm sorry, I encountered an error while processing your question. Please try again.",
+        isUser: false,
+        timestamp: new Date().toISOString()
+      };
+      setChatMessages(prev => [...prev, errorResponse]);
+    } finally {
       setIsChatting(false);
-    }, 1000 + Math.random() * 1000); // Random delay between 1-2 seconds
+    }
   };
 
   const handleChatKeyPress = (e) => {

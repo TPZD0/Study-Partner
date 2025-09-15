@@ -5,15 +5,8 @@ import { Badge } from '../ui/badge';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { CalendarDays, Target, CheckCircle, Brain, FileText, ArrowRight } from 'lucide-react';
 
-export function Dashboard({ goals, updateGoal, setCurrentPage }) {
-  const completedGoals = goals.filter(goal => goal.completed).length;
-  const totalGoals = goals.length;
-  const completionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
-
-  const chartData = [
-    { name: 'Completed', value: completedGoals, color: '#22c55e' },
-    { name: 'Pending', value: totalGoals - completedGoals, color: '#e5e7eb' },
-  ];
+export function Dashboard({ goalStats, setCurrentPage, updateGoalStats }) {
+  const { totalGoals, completedGoals, pendingGoals, overdueGoals, completionRate, chartData } = goalStats;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -64,7 +57,7 @@ export function Dashboard({ goals, updateGoal, setCurrentPage }) {
             </div>
             <div className="text-center mt-4">
               <p className="text-muted-foreground">
-                {completionRate.toFixed(1)}% Complete
+                {completionRate}% Complete
               </p>
             </div>
           </CardContent>
@@ -87,13 +80,19 @@ export function Dashboard({ goals, updateGoal, setCurrentPage }) {
             </p>
             <div className="flex justify-center space-x-4 text-sm">
               <div className="flex items-center space-x-1">
-                <span className="text-primary">{totalGoals}</span>
+                <span className="text-primary">{totalGoals || 0}</span>
                 <span className="text-muted-foreground">Total</span>
               </div>
               <div className="flex items-center space-x-1">
-                <span className="text-green-600">{completedGoals}</span>
+                <span className="text-green-600">{completedGoals || 0}</span>
                 <span className="text-muted-foreground">Complete</span>
               </div>
+              {overdueGoals > 0 && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-red-600">{overdueGoals}</span>
+                  <span className="text-muted-foreground">Overdue</span>
+                </div>
+              )}
             </div>
             <Button 
               onClick={() => setCurrentPage('goals')}

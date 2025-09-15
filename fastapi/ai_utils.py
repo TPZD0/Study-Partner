@@ -82,6 +82,59 @@ async def generate_summary(text: str, max_length: int = 500) -> str:
         logger.error(f"Error generating summary: {str(e)}")
         raise Exception(f"Failed to generate summary: {str(e)}")
 
+async def answer_question_about_pdf(file_path: str, question: str) -> str:
+    """
+    Answer a question about the content of a PDF file using OpenAI's GPT model.
+    
+    Args:
+        file_path (str): Path to the PDF file
+        question (str): The question to answer
+        
+    Returns:
+        str: Generated answer based on the PDF content
+    """
+    try:
+        # Extract text from PDF
+        extracted_text = extract_text_from_pdf(file_path)
+        
+        if not extracted_text.strip():
+            raise Exception("No text could be extracted from the PDF")
+        
+        # Truncate text if it's too long (OpenAI has token limits)
+        max_chars = 10000  # Leave room for question and response
+        if len(extracted_text) > max_chars:
+            extracted_text = extracted_text[:max_chars] + "..."
+            logger.info(f"Text truncated to {max_chars} characters due to length")
+        
+        prompt = f"""
+        Based on the following document content, please answer the user's question accurately and comprehensively. 
+        If the answer cannot be found in the document, please say so clearly.
+        
+        Document content:
+        {extracted_text}
+        
+        User's question: {question}
+        
+        Answer:
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant that answers questions based on document content. Always base your answers on the provided document and be clear when information is not available in the document."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=500,
+            temperature=0.3
+        )
+        
+        answer = response.choices[0].message.content.strip()
+        return answer
+    
+    except Exception as e:
+        logger.error(f"Error answering question about PDF: {str(e)}")
+        raise Exception(f"Failed to answer question: {str(e)}")
+
 async def summarize_pdf(file_path: str, max_length: int = 500) -> dict:
     """
     Extract text from a PDF and generate a summary.

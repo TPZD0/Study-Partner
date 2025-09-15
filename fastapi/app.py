@@ -6,6 +6,7 @@ from database import connect_db, disconnect_db
 from routes.files import router as files_router
 from routes.users import router as users_router
 from routes.ai import router as ai_router
+from routes.goals import router as goals_router
 
 app = FastAPI()
 
@@ -27,3 +28,4 @@ async def shutdown():
 app.include_router(files_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
+app.include_router(goals_router, prefix="/api")

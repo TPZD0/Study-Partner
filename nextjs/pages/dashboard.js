@@ -1,24 +1,63 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Dashboard as DashboardView } from '@/components/figma/Dashboard';
-import { initialGoals } from '@/lib/sampleData';
 import Link from 'next/link';
 import { Settings as SettingsIcon, LogOut, User as UserIcon } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [goals, setGoals] = useState(initialGoals);
+  const [goalStats, setGoalStats] = useState({
+    totalGoals: 0,
+    completedGoals: 0,
+    pendingGoals: 0,
+    overdueGoals: 0,
+    completionRate: 0,
+    chartData: []
+  });
   const [username, setUsername] = useState('User');
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   useEffect(() => {
-    try {
-      const name = localStorage.getItem('username');
-      if (name) setUsername(name);
-    } catch {}
+    const loadUserData = async () => {
+      try {
+        const name = localStorage.getItem('username');
+        const userId = localStorage.getItem('userId');
+        
+        if (name) setUsername(name);
+        
+        if (userId) {
+          // Load goal statistics from database
+          const response = await fetch(`http://localhost:8000/api/goals/${userId}/stats`);
+          if (response.ok) {
+            const stats = await response.json();
+            setGoalStats(stats);
+          } else {
+            console.error('Failed to load goal statistics');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadUserData();
   }, []);
 
-  const updateGoal = (id, updates) => {
-    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, ...updates } : g)));
+  const updateGoalStats = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const response = await fetch(`http://localhost:8000/api/goals/${userId}/stats`);
+        if (response.ok) {
+          const stats = await response.json();
+          setGoalStats(stats);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating goal stats:', error);
+    }
   };
 
   const setCurrentPage = (page) => {
@@ -55,7 +94,16 @@ export default function DashboardPage() {
             <span className="hidden sm:inline">Log out</span>
           </button>
         </div>
-        <DashboardView goals={goals} updateGoal={updateGoal} setCurrentPage={setCurrentPage} />
+        {isLoadingStats ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading your dashboard...</p>
+            </div>
+          </div>
+        ) : (
+          <DashboardView goalStats={goalStats} setCurrentPage={setCurrentPage} updateGoalStats={updateGoalStats} />
+        )}
       </div>
     </div>
   );

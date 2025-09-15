@@ -1,10 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Summarizer as SummarizerView } from '@/components/figma/Summarizer';
 
 export default function SummarizerPage() {
   const router = useRouter();
   const [history, setHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  // Load user's summary history from database
+  useEffect(() => {
+    const loadSummaryHistory = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          setIsLoadingHistory(false);
+          return;
+        }
+
+        const response = await fetch(`http://localhost:8000/api/ai/user-summaries/${userId}`);
+        if (response.ok) {
+          const summaries = await response.json();
+          setHistory(summaries);
+        } else {
+          console.error('Failed to load summary history');
+        }
+      } catch (error) {
+        console.error('Error loading summary history:', error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    loadSummaryHistory();
+  }, []);
 
   const setCurrentPage = (page) => {
     const map = {
@@ -14,8 +42,8 @@ export default function SummarizerPage() {
   };
 
   const addSummary = (summary) => {
-    const id = `sum-${Date.now()}`;
-    setHistory((prev) => [{ ...summary, id }, ...prev]);
+    // Add to local state immediately for responsive UI
+    setHistory((prev) => [summary, ...prev]);
   };
 
   const deleteSummary = (id) => {
@@ -29,13 +57,22 @@ export default function SummarizerPage() {
   return (
     <div className="min-h-screen bg-background text-foreground px-4 py-6">
       <div className="max-w-5xl mx-auto">
-        <SummarizerView
-          summaryHistory={history}
-          addSummary={addSummary}
-          deleteSummary={deleteSummary}
-          renameSummary={renameSummary}
-          setCurrentPage={setCurrentPage}
-        />
+        {isLoadingHistory ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading your summaries...</p>
+            </div>
+          </div>
+        ) : (
+          <SummarizerView
+            summaryHistory={history}
+            addSummary={addSummary}
+            deleteSummary={deleteSummary}
+            renameSummary={renameSummary}
+            setCurrentPage={setCurrentPage}
+          />
+        )}
       </div>
     </div>
   );
