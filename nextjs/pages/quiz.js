@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Flashcards as FlashcardsView } from '@/components/figma/Flashcards';
+import { Quiz as QuizView } from '@/components/figma/Quiz';
 import { sampleQuizHistory } from '@/lib/sampleData';
 
-export default function FlashcardsPage() {
+export default function QuizPage() {
   const router = useRouter();
   const [history, setHistory] = useState(sampleQuizHistory);
 
   // optional: persist across navigation
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('flashcardHistory');
+      const raw = localStorage.getItem('quizHistory');
       if (raw) setHistory(JSON.parse(raw));
     } catch {}
   }, []);
   useEffect(() => {
-    try { localStorage.setItem('flashcardHistory', JSON.stringify(history)); } catch {}
+    try { localStorage.setItem('quizHistory', JSON.stringify(history)); } catch {}
   }, [history]);
 
   const setCurrentPage = (page) => {
@@ -25,14 +25,14 @@ export default function FlashcardsPage() {
     router.push(map[page] || '/dashboard');
   };
 
-  const addFlashcardSet = (set) => {
+  const addQuizSet = (set) => {
     const id = `gen-${Date.now()}`;
     setHistory((prev) => [{ ...set, id }, ...prev]);
   };
-  const deleteFlashcardSet = (id) => {
+  const deleteQuizSet = (id) => {
     setHistory((prev) => prev.filter((s) => s.id !== id));
   };
-  const renameFlashcardSet = (id, newTitle) => {
+  const renameQuizSet = (id, newTitle) => {
     setHistory((prev) => prev.map((s) => (s.id === id ? { ...s, title: newTitle } : s)));
   };
   const navigateToQuiz = (quizId) => {
@@ -42,11 +42,11 @@ export default function FlashcardsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground px-4 py-6">
       <div className="max-w-5xl mx-auto">
-        <FlashcardsView
-          flashcardHistory={history}
-          addFlashcardSet={addFlashcardSet}
-          deleteFlashcardSet={deleteFlashcardSet}
-          renameFlashcardSet={renameFlashcardSet}
+        <QuizView
+          quizHistory={history}
+          addQuizSet={addQuizSet}
+          deleteQuizSet={deleteQuizSet}
+          renameQuizSet={renameQuizSet}
           setCurrentPage={setCurrentPage}
           navigateToQuiz={navigateToQuiz}
         />

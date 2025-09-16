@@ -110,7 +110,7 @@ export default function QuizDetailPage() {
     }
   };
 
-  const setCurrentPage = (page) => router.push('/flashcards');
+  const setCurrentPage = (page) => router.push('/quiz');
 
   // If quiz is already generated, show the quiz interface
   if (quiz) {
@@ -134,7 +134,7 @@ export default function QuizDetailPage() {
         <div className="flex items-center space-x-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/flashcards')}
+            onClick={() => router.push('/quiz')}
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="h-4 w-4" />

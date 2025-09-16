@@ -6,7 +6,7 @@ export const initialGoals = [
   { id: '3', name: 'Finish Science Project', dueDate: '2025-09-20', completed: false },
 ];
 
-export const sampleFlashcardHistory = [
+export const sampleQuizHistory = [
   {
     id: 'sample-1',
     title: 'PBL infographic Quiz',

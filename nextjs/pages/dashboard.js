@@ -64,7 +64,7 @@ export default function DashboardPage() {
     const map = {
       dashboard: '/dashboard',
       goals: '/goals',
-      flashcards: '/flashcards',
+      quiz: '/quiz',
       summarizer: '/summarizer',
       settings: '/settings',
     };

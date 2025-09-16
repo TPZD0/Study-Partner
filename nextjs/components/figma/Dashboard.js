@@ -139,16 +139,16 @@ export function Dashboard({ goalStats, setCurrentPage, updateGoalStats }) {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-muted-foreground">
-              Upload documents and generate interactive flashcards for better retention.
+              Upload documents and generate interactive quiz questions for better retention.
             </p>
             <div className="text-sm text-muted-foreground">
               Transform your study materials into effective learning tools
             </div>
             <Button 
-              onClick={() => setCurrentPage('flashcards')}
+              onClick={() => setCurrentPage('quiz')}
               className="w-full"
             >
-              Create Flashcards
+              Create Quiz
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
