@@ -1,0 +1,99 @@
+steps:
+  # Build FastAPI backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/study-partner-backend:$COMMIT_SHA', './fastapi']
+    id: 'build-backend'
+
+  # Build Next.js frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/study-partner-frontend:$COMMIT_SHA', './nextjs']
+    id: 'build-frontend'
+
+  # Push backend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/study-partner-backend:$COMMIT_SHA']
+    id: 'push-backend'
+    waitFor: ['build-backend']
+
+  # Push frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/study-partner-frontend:$COMMIT_SHA']
+    id: 'push-frontend'
+    waitFor: ['build-frontend']
+
+  # Deploy backend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'study-partner-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/study-partner-backend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'POSTGRES_HOST=${_POSTGRES_HOST},POSTGRES_USER=${_POSTGRES_USER},POSTGRES_PASSWORD=${_POSTGRES_PASSWORD},POSTGRES_DB=${_POSTGRES_DB},OPENAI_API_KEY=${_OPENAI_API_KEY}'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--timeout'
+      - '300'
+      - '--concurrency'
+      - '80'
+      - '--min-instances'
+      - '0'
+    id: 'deploy-backend'
+    waitFor: ['push-backend']
+
+  # Deploy frontend to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'study-partner-frontend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/study-partner-frontend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'NEXT_PUBLIC_API_URL=${_BACKEND_URL}'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--timeout'
+      - '300'
+      - '--concurrency'
+      - '80'
+      - '--min-instances'
+      - '0'
+    id: 'deploy-frontend'
+    waitFor: ['push-frontend']
+
+# Substitution variables (set these in Cloud Build trigger)
+substitutions:
+  _POSTGRES_HOST: 'your-postgres-host'
+  _POSTGRES_USER: 'your-postgres-user'
+  _POSTGRES_PASSWORD: 'your-postgres-password'
+  _POSTGRES_DB: 'advcompro'
+  _OPENAI_API_KEY: 'your-openai-api-key'
+  _BACKEND_URL: 'https://study-partner-backend-[hash]-uc.a.run.app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+
+timeout: '1200s'

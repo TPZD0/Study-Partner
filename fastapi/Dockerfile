@@ -13,9 +13,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
-# Expose the port FastAPI will run on
-EXPOSE 8000
+# Create uploads directory
+RUN mkdir -p uploads
+
+# Expose the port FastAPI will run on (Cloud Run uses PORT env var)
+EXPOSE $PORT
 
 # Command to run the FastAPI application with Uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use PORT environment variable for Cloud Run compatibility
+CMD exec uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
 

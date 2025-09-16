@@ -8,5 +8,9 @@ COPY . .
 RUN npx next telemetry disable
 RUN npm run build
 
-CMD ["npm", "run", "start"]
+# Expose the port (Cloud Run uses PORT env var)
+EXPOSE $PORT
+
+# Use PORT environment variable for Cloud Run compatibility
+CMD ["sh", "-c", "npm run start -- -p ${PORT:-3000}"]
 

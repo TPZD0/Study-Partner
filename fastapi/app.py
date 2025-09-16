@@ -29,3 +29,20 @@ app.include_router(files_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
 app.include_router(goals_router, prefix="/api")
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Cloud Run"""
+    try:
+        # Test database connection
+        if database.is_connected:
+            return {"status": "healthy", "database": "connected"}
+        else:
+            return {"status": "unhealthy", "database": "disconnected"}
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {"message": "Study Partner API is running"}
