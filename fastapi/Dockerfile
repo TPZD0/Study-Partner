@@ -20,6 +20,6 @@ RUN mkdir -p uploads
 EXPOSE $PORT
 
 # Command to run the FastAPI application with Uvicorn
-# Use PORT environment variable for Cloud Run compatibility
-CMD exec uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
+# Use PORT environment variable for Cloud Run compatibility (defaults to 8080)
+CMD exec uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}
 

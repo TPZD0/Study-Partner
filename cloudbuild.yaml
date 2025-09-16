@@ -1,12 +1,12 @@
 steps:
   # Build FastAPI backend
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/study-partner-backend:$COMMIT_SHA', './fastapi']
+    args: ['build', '-f', 'fastapi/Dockerfile', '-t', 'gcr.io/$PROJECT_ID/study-partner-backend:$COMMIT_SHA', './fastapi']
     id: 'build-backend'
 
   # Build Next.js frontend
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/study-partner-frontend:$COMMIT_SHA', './nextjs']
+    args: ['build', '-f', 'nextjs/Dockerfile', '-t', 'gcr.io/$PROJECT_ID/study-partner-frontend:$COMMIT_SHA', './nextjs']
     id: 'build-frontend'
 
   # Push backend image
