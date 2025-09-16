@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-// Use environment variable for API URL, fallback to local development
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://fastapi:8000";
+const API_URL = "http://fastapi:8000";
 
 const nextConfig = {
   reactStrictMode: true,

@@ -1,12 +1,10 @@
-import os
 from typing import Optional
 from databases import Database
 
-# Use environment variables for database configuration
-POSTGRES_USER = os.getenv("POSTGRES_USER", "temp")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "temp")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "advcompro")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "db")
+POSTGRES_USER = "temp"
+POSTGRES_PASSWORD = "temp"
+POSTGRES_DB = "advcompro"
+POSTGRES_HOST = "db"
 
 DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}/{POSTGRES_DB}"
 
