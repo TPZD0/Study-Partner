@@ -362,16 +362,47 @@ async def save_quiz_session(
 @router.get("/ai/quiz-history/{user_id}")
 async def get_quiz_history(user_id: int, limit: int = 20):
     """
-    Get quiz history for a user.
+    Get quiz history for a user, grouped by file with attempt counts and latest scores.
     """
     try:
+        # Get all sessions with attempt numbering
         query = """
-        SELECT qs.id, qs.score, qs.total_questions, qs.difficulty, qs.completed, 
-               qs.completed_at, qs.created_at, pf.name as file_name
-        FROM quiz_sessions qs
-        JOIN pdf_files pf ON qs.file_id = pf.id
-        WHERE qs.user_id = :user_id
-        ORDER BY qs.created_at DESC
+        WITH ranked_sessions AS (
+            SELECT 
+                qs.id, qs.score, qs.total_questions, qs.difficulty, qs.completed, 
+                qs.completed_at, qs.created_at, pf.name as file_name, qs.file_id,
+                ROW_NUMBER() OVER (PARTITION BY pf.name ORDER BY qs.created_at DESC) as attempt_rank,
+                COUNT(*) OVER (PARTITION BY pf.name) as total_attempts
+            FROM quiz_sessions qs
+            JOIN pdf_files pf ON qs.file_id = pf.id
+            WHERE qs.user_id = :user_id AND qs.completed = true
+        ),
+        latest_sessions AS (
+            SELECT DISTINCT
+                file_name,
+                file_id,
+                total_attempts,
+                FIRST_VALUE(id) OVER (PARTITION BY file_name ORDER BY created_at DESC) as latest_id,
+                FIRST_VALUE(score) OVER (PARTITION BY file_name ORDER BY created_at DESC) as latest_score,
+                FIRST_VALUE(total_questions) OVER (PARTITION BY file_name ORDER BY created_at DESC) as latest_total_questions,
+                FIRST_VALUE(difficulty) OVER (PARTITION BY file_name ORDER BY created_at DESC) as latest_difficulty,
+                FIRST_VALUE(completed_at) OVER (PARTITION BY file_name ORDER BY created_at DESC) as latest_completed_at,
+                FIRST_VALUE(created_at) OVER (PARTITION BY file_name ORDER BY created_at DESC) as latest_created_at
+            FROM ranked_sessions
+        )
+        SELECT 
+            latest_id as id,
+            file_name,
+            file_id,
+            latest_score as score,
+            latest_total_questions as total_questions,
+            latest_difficulty as difficulty,
+            true as completed,
+            latest_completed_at as completed_at,
+            latest_created_at as created_at,
+            total_attempts
+        FROM latest_sessions
+        ORDER BY latest_created_at DESC
         LIMIT :limit
         """
         
@@ -384,13 +415,15 @@ async def get_quiz_history(user_id: int, limit: int = 20):
             {
                 "id": session["id"],
                 "file_name": session["file_name"],
+                "file_id": session["file_id"],
                 "score": session["score"],
                 "total_questions": session["total_questions"],
                 "difficulty": session["difficulty"],
                 "completed": session["completed"],
                 "completed_at": session["completed_at"].isoformat() if session["completed_at"] else None,
                 "created_at": session["created_at"].isoformat(),
-                "percentage": round((session["score"] / session["total_questions"]) * 100) if session["score"] is not None else None
+                "total_attempts": session["total_attempts"],
+                "percentage": round((session["score"] / session["total_questions"]) * 100) if session["score"] is not None and session["total_questions"] > 0 else 0
             }
             for session in sessions
         ]

@@ -8,7 +8,7 @@ import { Upload, FileText, RotateCcw, ChevronLeft, ChevronRight, Clock, Trash2, 
 import { extractTextFromPDF } from '@/utils/pdfUtils';
 import { generateQuizFromContent } from '@/utils/quizGenerator';
 
-export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, setCurrentPage, navigateToQuiz }) {
+export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, setCurrentPage, navigateToQuiz, reloadHistory }) {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -53,6 +53,9 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
 
       const uploadResult = await uploadResponse.json();
       const fileId = uploadResult.id;
+
+      // Store file ID for later use when saving quiz results
+      localStorage.setItem('lastUploadedFileId', fileId.toString());
 
       // Generate quiz using the uploaded file
       const quizFormData = new FormData();
@@ -136,7 +139,7 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
     setShowAnswer(true);
   };
 
-  const finishQuiz = () => {
+  const finishQuiz = async () => {
     // Calculate final score
     let finalScore = 0;
     quizQuestions.forEach(question => {
@@ -146,6 +149,47 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
     });
     setScore(finalScore);
     setQuizCompleted(true);
+
+    // Save quiz result to database
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId && uploadedFile) {
+        // Find the file ID from the most recent quiz generation
+        const fileId = localStorage.getItem('lastUploadedFileId');
+        
+        if (fileId) {
+          const formData = new FormData();
+          formData.append('user_id', userId);
+          formData.append('file_id', fileId);
+          formData.append('quiz_data', JSON.stringify({
+            questions: quizQuestions,
+            title: uploadedFile.name.replace('.pdf', '') + ' Quiz'
+          }));
+          formData.append('user_answers', JSON.stringify(selectedAnswers));
+          formData.append('score', finalScore.toString());
+          formData.append('total_questions', quizQuestions.length.toString());
+          formData.append('difficulty', 'medium');
+          formData.append('completed', 'true');
+
+          const response = await fetch('http://localhost:8000/api/ai/save-quiz-session', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (response.ok) {
+            console.log('Quiz result saved to database');
+            // Reload history to show the new quiz result
+            if (reloadHistory) {
+              reloadHistory();
+            }
+          } else {
+            console.error('Failed to save quiz result');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
+    }
   };
 
   const resetCards = () => {
@@ -202,9 +246,38 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
     setEditingTitle('');
   };
 
-  const openQuizDetail = (quizSet) => {
-    if (quizSet.quizQuestions && quizSet.quizQuestions.length > 0) {
-      navigateToQuiz(quizSet.id);
+  const openQuizDetail = async (quizSet) => {
+    try {
+      // If this is a quiz from the database, load the full quiz data
+      if (quizSet.sessionId) {
+        const response = await fetch(`http://localhost:8000/api/ai/quiz-session/${quizSet.sessionId}`);
+        if (response.ok) {
+          const sessionData = await response.json();
+          
+          // Load the quiz questions from the database
+          const questions = sessionData.quiz_data.questions || [];
+          
+          if (questions.length > 0) {
+            setQuizQuestions(questions);
+            setCurrentQuestionIndex(0);
+            setSelectedAnswers({});
+            setShowAnswer(false);
+            setQuizCompleted(false);
+            setScore(0);
+            setUploadedFile({ name: sessionData.file_name });
+            
+            // Store the file ID for potential re-saving
+            localStorage.setItem('lastUploadedFileId', sessionData.file_id?.toString() || '');
+          }
+        } else {
+          console.error('Failed to load quiz session');
+        }
+      } else if (quizSet.quizQuestions && quizSet.quizQuestions.length > 0) {
+        // For locally generated quizzes
+        navigateToQuiz(quizSet.id);
+      }
+    } catch (error) {
+      console.error('Error loading quiz:', error);
     }
   };
 
