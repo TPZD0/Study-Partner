@@ -197,32 +197,22 @@ async def google_callback(code: Optional[str] = None, state: Optional[str] = Non
         if not user:
             raise HTTPException(status_code=500, detail="Failed to create user")
 
-    # Redirect to frontend with the user info so the client can store it
+    # Issue JWT and redirect to frontend API route to set cookie on frontend domain
     user_dict = dict(user)
-    redirect_url = _frontend_login_redirect(
-        {
-            "google": "1",
-            "user_id": str(user_dict.get("user_id")),
-            "username": user_dict.get("username"),
-            "email": user_dict.get("email"),
-            "first_name": user_dict.get("first_name") or "",
-            "last_name": user_dict.get("last_name") or "",
-        }
-    )
-    # Issue HttpOnly session cookie
     token = create_session_token(user_dict)
-    resp = RedirectResponse(redirect_url)
-    # For localhost, secure=False; set to True behind HTTPS
-    resp.set_cookie(
-        key="sp_session",
-        value=token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=7 * 24 * 3600,
-        path="/",
-    )
-    return resp
+    frontend_base = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    # forward minimal info; token is what matters
+    params = {
+        "token": token,
+        "user_id": str(user_dict.get("user_id")),
+        "username": user_dict.get("username") or "",
+        "email": user_dict.get("email") or "",
+        "first_name": user_dict.get("first_name") or "",
+        "last_name": user_dict.get("last_name") or "",
+        "redirect": "/dashboard",
+    }
+    url = f"{frontend_base}/api/auth/callback?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(url)
 
 
 @router.get("/auth/me")
