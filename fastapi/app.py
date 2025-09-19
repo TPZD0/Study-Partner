@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import os
 from fastapi.staticfiles import StaticFiles
 from database import connect_db, disconnect_db
 from routes.files import router as files_router
@@ -22,6 +23,8 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+# Ensure uploads directory exists for StaticFiles mount (Cloud Run images may not include it)
+os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Avoid forcing DB connection at startup to keep container fast and resilient on Cloud Run
