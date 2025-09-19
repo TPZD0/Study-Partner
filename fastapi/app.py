@@ -24,13 +24,7 @@ app.add_middleware(
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-@app.on_event("startup")
-async def startup():
-    await connect_db()
-
-@app.on_event("shutdown")
-async def shutdown():
-    await disconnect_db()
+# Avoid forcing DB connection at startup to keep container fast and resilient on Cloud Run
 
 app.include_router(files_router, prefix="/api")
 app.include_router(users_router, prefix="/api")

@@ -48,13 +48,7 @@ class UserLogin(BaseModel):
 async def ensure_db():
     await connect_db()
 
-@router.on_event("startup")
-async def _startup():
-    await connect_db()
-
-@router.on_event("shutdown")
-async def _shutdown():
-    await disconnect_db()
+# Do not connect DB at process startup; Cloud Run may start without DB availability
 
 @router.post("/users/create", response_model=User, dependencies=[Depends(ensure_db)])
 async def create_user(user: UserCreate):

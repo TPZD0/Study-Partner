@@ -17,12 +17,20 @@ database = Database(DATABASE_URL)
 # --- lifecycle ---------------------------------------------------------------
 
 async def connect_db():
-    if not database.is_connected:
-        await database.connect()
+    try:
+        if not database.is_connected:
+            await database.connect()
+    except Exception as e:
+        # Avoid crashing the service at startup if DB is unreachable
+        # Routes will attempt to reconnect on demand.
+        print(f"[database] connect skipped or failed: {e}")
 
 async def disconnect_db():
-    if database.is_connected:
-        await database.disconnect()
+    try:
+        if database.is_connected:
+            await database.disconnect()
+    except Exception as e:
+        print(f"[database] disconnect failed: {e}")
 
 # --- CRUD: users -------------------------------------------------------------
 
