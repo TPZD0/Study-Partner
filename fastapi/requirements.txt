@@ -6,3 +6,4 @@ passlib[bcrypt]
 openai
 PyPDF2
 python-multipart
+httpx
