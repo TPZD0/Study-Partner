@@ -49,7 +49,7 @@ export function Summarizer({ summaryHistory, addSummary, deleteSummary, renameSu
       formData.append('user_id', userId.toString());
       formData.append('name', file.name.replace('.pdf', ''));
 
-      const response = await fetch('http://localhost:8000/api/files/upload', {
+      const response = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData,
       });
@@ -84,7 +84,7 @@ export function Summarizer({ summaryHistory, addSummary, deleteSummary, renameSu
       formData.append('file_id', uploadedFileId.toString());
       formData.append('max_length', '500');
 
-      const response = await fetch('http://localhost:8000/api/ai/summarize', {
+      const response = await fetch('/api/ai/summarize', {
         method: 'POST',
         body: formData,
       });
@@ -140,7 +140,7 @@ export function Summarizer({ summaryHistory, addSummary, deleteSummary, renameSu
       formData.append('file_id', summary.fileId.toString());
       formData.append('question', question);
 
-      const response = await fetch('http://localhost:8000/api/ai/chat', {
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         body: formData,
       });

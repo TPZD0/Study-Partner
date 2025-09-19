@@ -4,7 +4,7 @@ import urllib.parse
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import RedirectResponse
 
 from database import (
@@ -13,6 +13,7 @@ from database import (
     get_user_by_identifier,
     insert_user,
 )
+from security import create_session_token, require_auth
 
 router = APIRouter()
 
@@ -208,4 +209,33 @@ async def google_callback(code: Optional[str] = None, state: Optional[str] = Non
             "last_name": user_dict.get("last_name") or "",
         }
     )
-    return RedirectResponse(redirect_url)
+    # Issue HttpOnly session cookie
+    token = create_session_token(user_dict)
+    resp = RedirectResponse(redirect_url)
+    # For localhost, secure=False; set to True behind HTTPS
+    resp.set_cookie(
+        key="sp_session",
+        value=token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=7 * 24 * 3600,
+        path="/",
+    )
+    return resp
+
+
+@router.get("/auth/me")
+async def auth_me(user=Depends(require_auth)):
+    return {
+        "user_id": user.get("sub"),
+        "username": user.get("username"),
+        "email": user.get("email"),
+    }
+
+
+@router.post("/auth/logout")
+async def auth_logout():
+    resp = RedirectResponse(_env("FRONTEND_URL", "http://localhost:3000") + "/login")
+    resp.delete_cookie("sp_session", path="/")
+    return resp

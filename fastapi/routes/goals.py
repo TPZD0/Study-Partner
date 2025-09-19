@@ -1,11 +1,13 @@
 # routes/goals.py
-from fastapi import APIRouter, HTTPException, Form
+from fastapi import APIRouter, HTTPException, Form, Depends, Request
 from fastapi.responses import JSONResponse
 from database import database
 from datetime import datetime, date
 import logging
 
-router = APIRouter()
+from security import require_auth
+
+router = APIRouter(dependencies=[Depends(require_auth)])
 logger = logging.getLogger(__name__)
 
 @router.get("/goals/{user_id}")

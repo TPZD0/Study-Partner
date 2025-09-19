@@ -9,6 +9,20 @@ export default function SummarizerPage() {
 
   // Load user's summary history from database
   useEffect(() => {
+    const ensureAuth = async () => {
+      try {
+        const me = await fetch('/api/auth/me');
+        if (me.status === 401) {
+          router.replace('/login');
+          return false;
+        }
+      } catch {
+        router.replace('/login');
+        return false;
+      }
+      return true;
+    };
+
     const loadSummaryHistory = async () => {
       try {
         const userId = localStorage.getItem('userId');
@@ -17,7 +31,7 @@ export default function SummarizerPage() {
           return;
         }
 
-        const response = await fetch(`http://localhost:8000/api/ai/user-summaries/${userId}`);
+        const response = await fetch(`/api/ai/user-summaries/${userId}`);
         if (response.ok) {
           const summaries = await response.json();
           setHistory(summaries);
@@ -31,8 +45,12 @@ export default function SummarizerPage() {
       }
     };
 
-    loadSummaryHistory();
-  }, []);
+    (async () => {
+      const ok = await ensureAuth();
+      if (ok) await loadSummaryHistory();
+      setIsLoadingHistory(false);
+    })();
+  }, [router]);
 
   const setCurrentPage = (page) => {
     const map = {

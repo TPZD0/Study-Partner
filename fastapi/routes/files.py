@@ -1,11 +1,13 @@
 # routes/files.py
-from fastapi import APIRouter, UploadFile, Form, HTTPException
+from fastapi import APIRouter, UploadFile, Form, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 import os, uuid, shutil
 from datetime import datetime
 from database import insert_pdf, get_recent_pdfs
 
-router = APIRouter()
+from security import require_auth
+
+router = APIRouter(dependencies=[Depends(require_auth)])
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)

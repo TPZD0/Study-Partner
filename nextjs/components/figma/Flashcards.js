@@ -42,7 +42,7 @@ export function Flashcards({ flashcardHistory, addFlashcardSet, deleteFlashcardS
       formData.append('user_id', userId);
 
       // Upload file to backend
-      const uploadResponse = await fetch('http://localhost:8000/api/files/upload', {
+      const uploadResponse = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData
       });
@@ -60,7 +60,7 @@ export function Flashcards({ flashcardHistory, addFlashcardSet, deleteFlashcardS
       quizFormData.append('num_questions', '10');
       quizFormData.append('difficulty', 'medium');
 
-      const quizResponse = await fetch('http://localhost:8000/api/ai/generate-quiz', {
+      const quizResponse = await fetch('/api/ai/generate-quiz', {
         method: 'POST',
         body: quizFormData
       });

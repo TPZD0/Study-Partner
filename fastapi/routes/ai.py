@@ -1,12 +1,14 @@
 # routes/ai.py
-from fastapi import APIRouter, HTTPException, Form
+from fastapi import APIRouter, HTTPException, Form, Depends, Request
 from fastapi.responses import JSONResponse
 from ai_utils import summarize_pdf, answer_question_about_pdf, generate_quiz_from_pdf
 from database import database
 import os
 import logging
 
-router = APIRouter()
+from security import require_auth
+
+router = APIRouter(dependencies=[Depends(require_auth)])
 logger = logging.getLogger(__name__)
 
 @router.post("/ai/summarize")

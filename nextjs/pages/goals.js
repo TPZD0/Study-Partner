@@ -17,7 +17,7 @@ export default function GoalsPage() {
           return;
         }
 
-        const response = await fetch(`http://localhost:8000/api/goals/${userId}`);
+        const response = await fetch(`/api/goals/${userId}`);
         if (response.ok) {
           const userGoals = await response.json();
           setGoals(userGoals);
@@ -48,7 +48,7 @@ export default function GoalsPage() {
       formData.append('description', goal.description || '');
       formData.append('due_date', goal.dueDate);
 
-      const response = await fetch('http://localhost:8000/api/goals', {
+      const response = await fetch('/api/goals', {
         method: 'POST',
         body: formData,
       });
@@ -82,7 +82,7 @@ export default function GoalsPage() {
       if (updates.dueDate !== undefined) formData.append('due_date', updates.dueDate);
       if (updates.completed !== undefined) formData.append('completed', updates.completed);
 
-      const response = await fetch(`http://localhost:8000/api/goals/${id}`, {
+      const response = await fetch(`/api/goals/${id}`, {
         method: 'PUT',
         body: formData,
       });
@@ -111,7 +111,7 @@ export default function GoalsPage() {
       const formData = new FormData();
       formData.append('user_id', userId);
 
-      const response = await fetch(`http://localhost:8000/api/goals/${id}`, {
+      const response = await fetch(`/api/goals/${id}`, {
         method: 'DELETE',
         body: formData,
       });

@@ -18,7 +18,7 @@ export default function QuizPage() {
           return;
         }
 
-        const response = await fetch(`http://localhost:8000/api/ai/quiz-history/${userId}`);
+        const response = await fetch(`/api/ai/quiz-history/${userId}`);
         if (response.ok) {
           const quizHistory = await response.json();
           
@@ -119,7 +119,7 @@ export default function QuizPage() {
       const userId = localStorage.getItem('userId');
       if (!userId) return;
 
-      const response = await fetch(`http://localhost:8000/api/ai/quiz-history/${userId}`);
+      const response = await fetch(`/api/ai/quiz-history/${userId}`);
       if (response.ok) {
         const quizHistory = await response.json();
         

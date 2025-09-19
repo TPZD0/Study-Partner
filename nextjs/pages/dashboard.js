@@ -18,6 +18,20 @@ export default function DashboardPage() {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   useEffect(() => {
+    const ensureAuth = async () => {
+      try {
+        const me = await fetch('/api/auth/me');
+        if (me.status === 401) {
+          router.replace('/login');
+          return false;
+        }
+      } catch {
+        router.replace('/login');
+        return false;
+      }
+      return true;
+    };
+
     const loadUserData = async () => {
       try {
         const name = localStorage.getItem('username');
@@ -27,7 +41,7 @@ export default function DashboardPage() {
         
         if (userId) {
           // Load goal statistics from database
-          const response = await fetch(`http://localhost:8000/api/goals/${userId}/stats`);
+          const response = await fetch(`/api/goals/${userId}/stats`);
           if (response.ok) {
             const stats = await response.json();
             setGoalStats(stats);
@@ -42,14 +56,18 @@ export default function DashboardPage() {
       }
     };
 
-    loadUserData();
-  }, []);
+    (async () => {
+      const ok = await ensureAuth();
+      if (ok) await loadUserData();
+      setIsLoadingStats(false);
+    })();
+  }, [router]);
 
   const updateGoalStats = async () => {
     try {
       const userId = localStorage.getItem('userId');
       if (userId) {
-        const response = await fetch(`http://localhost:8000/api/goals/${userId}/stats`);
+        const response = await fetch(`/api/goals/${userId}/stats`);
         if (response.ok) {
           const stats = await response.json();
           setGoalStats(stats);
@@ -85,8 +103,8 @@ export default function DashboardPage() {
           </Link>
           <button
             onClick={() => {
-              try { localStorage.removeItem('username'); localStorage.removeItem('userEmail'); } catch {}
-              router.push('/login');
+              try { localStorage.removeItem('username'); localStorage.removeItem('userEmail'); localStorage.removeItem('userId'); } catch {}
+              fetch('/api/auth/logout', { method: 'POST' }).finally(() => router.push('/login'));
             }}
             className="inline-flex items-center gap-2 px-3 py-2 rounded-md border hover:bg-accent text-sm"
           >

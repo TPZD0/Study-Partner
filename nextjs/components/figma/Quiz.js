@@ -42,7 +42,7 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
       formData.append('user_id', userId);
 
       // Upload file to backend
-      const uploadResponse = await fetch('http://localhost:8000/api/files/upload', {
+      const uploadResponse = await fetch('/api/files/upload', {
         method: 'POST',
         body: formData
       });
@@ -63,7 +63,7 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
       quizFormData.append('num_questions', '10');
       quizFormData.append('difficulty', 'medium');
 
-      const quizResponse = await fetch('http://localhost:8000/api/ai/generate-quiz', {
+      const quizResponse = await fetch('/api/ai/generate-quiz', {
         method: 'POST',
         body: quizFormData
       });
@@ -171,7 +171,7 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
           formData.append('difficulty', 'medium');
           formData.append('completed', 'true');
 
-          const response = await fetch('http://localhost:8000/api/ai/save-quiz-session', {
+          const response = await fetch('/api/ai/save-quiz-session', {
             method: 'POST',
             body: formData
           });
@@ -250,7 +250,7 @@ export function Quiz({ quizHistory, addQuizSet, deleteQuizSet, renameQuizSet, se
     try {
       // If this is a quiz from the database, load the full quiz data
       if (quizSet.sessionId) {
-        const response = await fetch(`http://localhost:8000/api/ai/quiz-session/${quizSet.sessionId}`);
+        const response = await fetch(`/api/ai/quiz-session/${quizSet.sessionId}`);
         if (response.ok) {
           const sessionData = await response.json();
           

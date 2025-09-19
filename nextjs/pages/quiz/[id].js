@@ -24,7 +24,7 @@ export default function QuizDetailPage() {
     const loadFiles = async () => {
       try {
         const userId = localStorage.getItem('userId') || '1'; // Default to user 1
-        const response = await fetch(`http://localhost:8000/api/ai/files-for-quiz/${userId}`);
+        const response = await fetch(`/api/ai/files-for-quiz/${userId}`);
         if (response.ok) {
           const filesData = await response.json();
           setFiles(filesData);
@@ -49,7 +49,7 @@ export default function QuizDetailPage() {
       formData.append('num_questions', quizSettings.num_questions.toString());
       formData.append('difficulty', quizSettings.difficulty);
 
-      const response = await fetch('http://localhost:8000/api/ai/generate-quiz', {
+      const response = await fetch('/api/ai/generate-quiz', {
         method: 'POST',
         body: formData
       });
@@ -99,7 +99,7 @@ export default function QuizDetailPage() {
       formData.append('difficulty', quizSettings.difficulty);
       formData.append('completed', 'true');
 
-      await fetch('http://localhost:8000/api/ai/save-quiz-session', {
+      await fetch('/api/ai/save-quiz-session', {
         method: 'POST',
         body: formData
       });
