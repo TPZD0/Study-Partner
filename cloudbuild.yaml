@@ -1,0 +1,79 @@
+steps:
+  # Build FastAPI image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '-f'
+      - fastapi/Dockerfile
+      - '-t'
+      - 'gcr.io/${PROJECT_ID}/${_FASTAPI_SERVICE}:${SHORT_SHA}'
+      - fastapi
+
+  # Push FastAPI image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - 'gcr.io/${PROJECT_ID}/${_FASTAPI_SERVICE}:${SHORT_SHA}'
+
+  # Deploy FastAPI to Cloud Run
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - '${_FASTAPI_SERVICE}'
+      - '--image=gcr.io/${PROJECT_ID}/${_FASTAPI_SERVICE}:${SHORT_SHA}'
+      - '--region=${_REGION}'
+      - '--allow-unauthenticated'
+      - '--port=8000'
+      - '--set-env-vars=FRONTEND_URL=${_FRONTEND_URL},DATABASE_URL=${_DATABASE_URL},OPENAI_API_KEY=${_OPENAI_API_KEY},JWT_SECRET=${_JWT_SECRET},GOOGLE_CLIENT_ID=${_GOOGLE_CLIENT_ID},GOOGLE_CLIENT_SECRET=${_GOOGLE_CLIENT_SECRET},GOOGLE_REDIRECT_URI=${_GOOGLE_REDIRECT_URI}'
+
+  # Build Next.js image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '-f'
+      - nextjs/Dockerfile
+      - '--build-arg'
+      - 'API_URL=${_API_URL}'
+      - '-t'
+      - 'gcr.io/${PROJECT_ID}/${_NEXTJS_SERVICE}:${SHORT_SHA}'
+      - nextjs
+
+  # Push Next.js image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - 'gcr.io/${PROJECT_ID}/${_NEXTJS_SERVICE}:${SHORT_SHA}'
+
+  # Deploy Next.js to Cloud Run
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - '${_NEXTJS_SERVICE}'
+      - '--image=gcr.io/${PROJECT_ID}/${_NEXTJS_SERVICE}:${SHORT_SHA}'
+      - '--region=${_REGION}'
+      - '--allow-unauthenticated'
+      - '--port=3000'
+
+images:
+  - 'gcr.io/${PROJECT_ID}/${_FASTAPI_SERVICE}:${SHORT_SHA}'
+  - 'gcr.io/${PROJECT_ID}/${_NEXTJS_SERVICE}:${SHORT_SHA}'
+
+substitutions:
+  _REGION: us-central1
+  _FASTAPI_SERVICE: study-partner-api
+  _NEXTJS_SERVICE: study-partner-web
+  _API_URL: https://YOUR_BACKEND_URL
+  _FRONTEND_URL: https://YOUR_FRONTEND_URL
+  _DATABASE_URL: ''
+  _OPENAI_API_KEY: ''
+  _JWT_SECRET: ''
+  _GOOGLE_CLIENT_ID: ''
+  _GOOGLE_CLIENT_SECRET: ''
+  _GOOGLE_REDIRECT_URI: https://YOUR_BACKEND_URL/api/auth/google/callback
+
+options:
+  logging: CLOUD_LOGGING_ONLY
