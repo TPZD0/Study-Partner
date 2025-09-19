@@ -83,7 +83,7 @@ steps:
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--port=3000'  # Match the port in Next.js Dockerfile
+      - '--port=8080'  # Match the port in Next.js Dockerfile
       - '--labels=managed-by=cloudbuild,commit-sha=$SHORT_SHA,service=frontend'
       - '--quiet'
     waitFor: ['push-nextjs']
@@ -105,7 +105,7 @@ substitutions:
   _FRONTEND_URL: https://${_NEXTJS_SERVICE}-${PROJECT_ID}.a.run.app  # Will be replaced after first deployment
   _DATABASE_URL: ''  # Set this in Cloud Build variables
   _OPENAI_API_KEY: ''  # Set this in Cloud Build variables
-  _JWT_SECRET: ''  # Generate a secure random string and set in Cloud Build variables
+  _JWT_SECRET: 'aisldjalsdjawghajsnduiahsdiuausdoasdiuagsdkjasydaiuduaushdjasdjlwhaisuhdashduiaskd'  # Generate a secure random string and set in Cloud Build variables
   _GOOGLE_CLIENT_ID: ''  # Set up OAuth in Google Cloud Console and add here
   _GOOGLE_CLIENT_SECRET: ''  # Set in Cloud Build variables
   _GOOGLE_REDIRECT_URI: https://${_FASTAPI_SERVICE}-${PROJECT_ID}.a.run.app/api/auth/google/callback

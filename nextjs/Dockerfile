@@ -11,7 +11,7 @@ ENV API_URL=${API_URL}
 RUN npm run build
 
 # Respect Cloud Run's PORT env var
-ENV PORT=3000
-EXPOSE 3000
+ENV PORT=8080
+EXPOSE 8080
 CMD ["sh", "-c", "npm run start -- -p ${PORT}"]
 
