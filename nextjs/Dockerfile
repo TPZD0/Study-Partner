@@ -21,6 +21,8 @@ COPY . .
 # Provide API_URL at build time for next.config rewrites
 ARG API_URL
 ENV API_URL=${API_URL}
+# Prevent Node OOM during Next build on smaller builders
+ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 
 # Runtime image
@@ -30,6 +32,7 @@ ENV NODE_ENV=production
 ENV PORT=8080
 ENV HOST=0.0.0.0
 ENV HOSTNAME=0.0.0.0
+ENV NODE_OPTIONS=--max-old-space-size=2048
 
 # Non-root user for security
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
