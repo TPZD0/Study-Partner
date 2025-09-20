@@ -28,6 +28,8 @@ FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
+ENV HOST=0.0.0.0
+ENV HOSTNAME=0.0.0.0
 
 # Non-root user for security
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
