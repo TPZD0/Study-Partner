@@ -4,7 +4,8 @@ const API_URL = process.env.API_URL || "http://fastapi:8000";
 
 const nextConfig = {
   reactStrictMode: true,
-  // output: 'export',
+  // Build a minimal production image
+  output: 'standalone',
   images: {
     unoptimized: true,
   },
